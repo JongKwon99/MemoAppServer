@@ -116,6 +116,9 @@ public class TextEditorWebSocketHandler extends TextWebSocketHandler {
                 int newLine = json.get("line").getAsInt();
                 String userId = clientIdMap.get(session);
 
+                // ✅ 로그 출력 추가
+                System.out.printf("[FILE : %s / LINE : %d / NAME : %s]%n", filename, newLine, userId);
+
                 fileLocks.putIfAbsent(filename, new HashMap<>());
                 Map<Integer, String> locks = fileLocks.get(filename);
 
@@ -135,39 +138,39 @@ public class TextEditorWebSocketHandler extends TextWebSocketHandler {
 
                 broadcastLockState(filename);
             }
-//            case "lock_request" -> {
-//                String filename = json.get("filename").getAsString();
-//                int line = json.get("line").getAsInt();
-//                String userId = clientIdMap.get(session);
-//
-//                fileLocks.putIfAbsent(filename, new HashMap<>());
-//                Map<Integer, String> locks = fileLocks.get(filename);
-//
-//                if (sessionLocks.containsKey(session)) {
-//                    LockInfo prev = sessionLocks.remove(session);
-//                    Map<Integer, String> prevLocks = fileLocks.get(prev.filename);
-//                    if (prevLocks != null) prevLocks.remove(prev.line);
-//                }
-//
-//                boolean granted = false;
-//                if (!locks.containsKey(line) || locks.get(line).equals(userId)) {
-//                    locks.put(line, userId);
-//                    sessionLocks.put(session, new LockInfo(filename, line));
-//                    granted = true;
-//                }
-//
-//                broadcastLockState(filename);
-//            }
-//            case "unlock_request" -> {
-//                String filename = json.get("filename").getAsString();
-//                int line = json.get("line").getAsInt();
-//                String userId = clientIdMap.get(session);
-//                Map<Integer, String> locks = fileLocks.get(filename);
-//                if (locks != null && locks.getOrDefault(line, "").equals(userId)) {
-//                    locks.remove(line);
-//                    broadcastLockState(filename);
-//                }
-//            }
+            case "lock_request" -> {
+                String filename = json.get("filename").getAsString();
+                int line = json.get("line").getAsInt();
+                String userId = clientIdMap.get(session);
+
+                fileLocks.putIfAbsent(filename, new HashMap<>());
+                Map<Integer, String> locks = fileLocks.get(filename);
+
+                if (sessionLocks.containsKey(session)) {
+                    LockInfo prev = sessionLocks.remove(session);
+                    Map<Integer, String> prevLocks = fileLocks.get(prev.filename);
+                    if (prevLocks != null) prevLocks.remove(prev.line);
+                }
+
+                boolean granted = false;
+                if (!locks.containsKey(line) || locks.get(line).equals(userId)) {
+                    locks.put(line, userId);
+                    sessionLocks.put(session, new LockInfo(filename, line));
+                    granted = true;
+                }
+
+                broadcastLockState(filename);
+            }
+            case "unlock_request" -> {
+                String filename = json.get("filename").getAsString();
+                int line = json.get("line").getAsInt();
+                String userId = clientIdMap.get(session);
+                Map<Integer, String> locks = fileLocks.get(filename);
+                if (locks != null && locks.getOrDefault(line, "").equals(userId)) {
+                    locks.remove(line);
+                    broadcastLockState(filename);
+                }
+            }
         }
     }
 
