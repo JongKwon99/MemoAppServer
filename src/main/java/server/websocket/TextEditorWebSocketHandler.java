@@ -33,22 +33,45 @@ public class TextEditorWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
 
+        String nickname = "unknown";
         String query = session.getUri().getQuery();
         if (query != null) {
             for (String param : query.split("&")) {
                 if (param.startsWith("clientId=") || param.startsWith("nickname=")) {
-                    clientIdMap.put(session, param.split("=")[1]);
+                    nickname = param.split("=")[1];
+                    clientIdMap.put(session, nickname);
                     break;
                 }
             }
         }
+
+        System.out.printf("✅ 클라이언트 접속: %s%n", nickname);
+
+        JsonObject joinMsg = new JsonObject();
+        joinMsg.addProperty("type", "client_join");
+        joinMsg.addProperty("nickname", nickname);
+        broadcast(joinMsg.toString());
+
         sendFileListTo(session);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         sessions.remove(session);
-        clientIdMap.remove(session);
+        String nickname = clientIdMap.remove(session);
+        if (nickname != null) {
+            System.out.printf("❌ 클라이언트 종료: %s%n", nickname);
+
+            // 다른 클라이언트에게 종료 알림
+            JsonObject leaveMsg = new JsonObject();
+            leaveMsg.addProperty("type", "client_leave");
+            leaveMsg.addProperty("nickname", nickname);
+            try {
+                broadcast(leaveMsg.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         if (sessionLocks.containsKey(session)) {
             LockInfo info = sessionLocks.remove(session);

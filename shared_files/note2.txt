@@ -1,14 +1,6 @@
-a
-bsa
-c
-ddddddhhhdhdhahdd
-e
-f
-gd
-hdd
-i
-j
-
+A
+B
+C
 
 
 
