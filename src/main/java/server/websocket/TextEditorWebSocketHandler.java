@@ -36,13 +36,12 @@ public class TextEditorWebSocketHandler extends TextWebSocketHandler {
         String query = session.getUri().getQuery();
         if (query != null) {
             for (String param : query.split("&")) {
-                if (param.startsWith("clientId=")) {
+                if (param.startsWith("clientId=") || param.startsWith("nickname=")) {
                     clientIdMap.put(session, param.split("=")[1]);
                     break;
                 }
             }
         }
-
         sendFileListTo(session);
     }
 
